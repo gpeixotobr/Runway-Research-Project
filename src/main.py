@@ -1,4 +1,4 @@
-from utils import process_statistics_for_file, categorize_users
+from utils import process_statistics_for_file, categorize_users, perform_mann_whitney_test
 
 def main() -> None:
     """
@@ -12,6 +12,8 @@ def main() -> None:
 
     # Categorizar usuários e salvar em um CSV
     categorize_users('../data/questionario_de_delineamento_do_perfil_do_usuario.csv', '../output/categoria_usuario.csv')
+
+    perform_mann_whitney_test('../data/dados_after.csv', '../data/dados_runway.csv', ['T1','T2','T3','T4','T5'])
 
 if __name__ == "__main__":
     main()

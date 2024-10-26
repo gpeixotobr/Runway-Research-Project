@@ -1,5 +1,5 @@
 import pandas as pd
-from scipy.stats import shapiro
+from scipy.stats import mannwhitneyu
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
@@ -48,22 +48,6 @@ def calculate_correlation_matrix(data: pd.DataFrame) -> pd.DataFrame:
     data_corr = data_corr.fillna(0)
     return data_corr
 
-def perform_shapiro_test(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Realiza o teste de Shapiro-Wilk em todas as colunas do DataFrame.
-
-    Args:
-        data (pd.DataFrame): DataFrame contendo os dados numéricos.
-
-    Returns:
-        pd.DataFrame: DataFrame com os resultados do teste de Shapiro-Wilk para cada coluna.
-    """
-    results = []
-    for column in data.columns:
-        stat, p_value = shapiro(data[column])
-        print(f'Coluna: {column} - Statistic: {stat}, p-value: {p_value}')
-        results.append({'Coluna': column, 'W-Statistic': stat, 'p-value': p_value})
-    return pd.DataFrame(results)
 
 def categorize_user(row: pd.Series) -> str:
     """
@@ -105,11 +89,11 @@ def save_to_csv(df: pd.DataFrame, filename: str) -> None:
 
 def process_statistics_for_file(filepath: str, prefix: str) -> None:
     """
-    Processa as estatísticas, matriz de correlação e teste de Shapiro-Wilk para um arquivo CSV específico.
+    Processa as estatísticas, matriz de correlação para um arquivo CSV específico.
 
     Args:
         filepath (str): Caminho para o arquivo CSV.
-        prefix (str): Prefixo para os arquivos de saída (estatísticas, correlação e teste Shapiro-Wilk).
+        prefix (str): Prefixo para os arquivos de saída (estatísticas, correlação).
     """
     # Carregar os dados
     data = load_data(filepath)
@@ -123,6 +107,37 @@ def process_statistics_for_file(filepath: str, prefix: str) -> None:
     data_corr = calculate_correlation_matrix(data)
     save_to_csv(data_corr, f'../output/{prefix}_matriz_correlacao.csv')
 
-    # Realizar o teste de Shapiro-Wilk e salvar os resultados
-    shapiro_results = perform_shapiro_test(data)
-    save_to_csv(shapiro_results, f'../output/{prefix}_shapiro.csv')
+def perform_mann_whitney_test(filepath1: str, filepath2: str, columns: list) -> pd.DataFrame:
+    """
+    Realiza o teste de Mann-Whitney para uma lista de colunas entre dois arquivos CSV.
+
+    Args:
+        filepath1 (str): Caminho para o primeiro arquivo CSV contendo os dados do primeiro grupo.
+        filepath2 (str): Caminho para o segundo arquivo CSV contendo os dados do segundo grupo.
+        columns (list): Lista de nomes das colunas a serem comparadas entre os arquivos.
+
+    Returns:
+        pd.DataFrame: DataFrame com o resultado do teste Mann-Whitney (estatística U e valor-p) para cada coluna.
+    """
+    # Carregar os dados dos arquivos
+    df1 = load_data(filepath1)
+    df2 = load_data(filepath2)
+    
+    # Realizar o teste para cada coluna especificada
+    results = []
+    for column in columns:
+        # Realizar o teste de Mann-Whitney para cada coluna
+        stat, p_value = mannwhitneyu(df1[column], df2[column], alternative='two-sided')
+        
+        # Adicionar os resultados em uma lista de dicionários
+        results.append({
+            "Coluna": column,
+            "Estatística U": stat,
+            "Valor-p": p_value
+        })
+
+    # Converter a lista de resultados em um DataFrame
+    results_df = pd.DataFrame(results)
+
+    save_to_csv(results_df, f'../output/mann_whitney.csv')
+    
