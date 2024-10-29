@@ -1,5 +1,8 @@
 import pandas as pd
 from scipy.stats import mannwhitneyu
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 
 def load_data(filepath: str) -> pd.DataFrame:
     """
@@ -106,6 +109,13 @@ def process_statistics_for_file(filepath: str, prefix: str) -> None:
     # Calcular e salvar a matriz de correlação
     data_corr = calculate_correlation_matrix(data)
     save_to_csv(data_corr, f'../output/{prefix}_matriz_correlacao.csv')
+
+    # Gerar e salvar o Heatmap da matriz de correlação
+    correlation_matrix = data_corr.applymap(lambda x: x if abs(x) >= 0.7 else 0)
+    plt.figure(figsize=(16, 6))
+    heatmap = sns.heatmap(correlation_matrix, vmin=0.7, vmax=1, annot=True, cmap=sns.light_palette("seagreen", as_cmap=True))
+    heatmap.set_title('Matriz de correlação', fontdict={'fontsize':18}, pad=12);
+    plt.savefig(f'../img/{prefix}_heatmap.png', dpi=300, bbox_inches='tight')
 
 def perform_mann_whitney_test(filepath1: str, filepath2: str, columns: list) -> pd.DataFrame:
     """
